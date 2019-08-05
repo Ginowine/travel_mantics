@@ -1,6 +1,7 @@
 package com.example.travelmantics;
 
 import android.content.Intent;
+import android.content.res.Resources;
 import android.net.Uri;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -11,14 +12,17 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.firebase.ui.auth.data.model.Resource;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.squareup.picasso.Picasso;
 
 public class DealActivity extends AppCompatActivity {
 
@@ -30,6 +34,8 @@ public class DealActivity extends AppCompatActivity {
     EditText txtTitle;
     EditText txtDescription;
     EditText txtPrice;
+
+    ImageView imageView;
 
 
     @Override
@@ -45,6 +51,7 @@ public class DealActivity extends AppCompatActivity {
         txtTitle = (EditText) findViewById(R.id.txtTitle);
         txtDescription = (EditText) findViewById(R.id.txtDescription);
         txtPrice = (EditText) findViewById(R.id.txtPrice);
+        imageView = (ImageView) findViewById(R.id.image);
 
         Intent intent = getIntent();
         TravelDeal deal = (TravelDeal) intent.getSerializableExtra("Deal");
@@ -55,6 +62,8 @@ public class DealActivity extends AppCompatActivity {
         txtTitle.setText(deal.getTitle());
         txtDescription.setText(deal.getDescription());
         txtPrice.setText(deal.getPrice());
+
+        showImage(deal.getImageUrl());
 
         Button btnImage = (Button) findViewById(R.id.btnImage);
         btnImage.setOnClickListener(new View.OnClickListener() {
@@ -132,6 +141,7 @@ public class DealActivity extends AppCompatActivity {
         if (FirebaseUtil.isAdmin){
             menu.findItem(R.id.delete_menu).setVisible(true);
             menu.findItem(R.id.save_menu).setVisible(true);
+            menu.findItem(R.id.insert_menu);
             enableEditTexts(true);
         }
         else{
@@ -165,9 +175,21 @@ public class DealActivity extends AppCompatActivity {
                     String url = downloadUrl.toString();
 
                     deal.setImageUrl(url);
+                    showImage(url);
 
                 }
             });
+        }
+    }
+
+    private void showImage(String url){
+        if (url != null && url.isEmpty() == false){
+            int width = Resources.getSystem().getDisplayMetrics().widthPixels;
+            Picasso.with(this)
+                    .load(url)
+                    .resize(width, width*2/3)
+                    .centerCrop()
+                    .into(imageView);
         }
     }
 }
