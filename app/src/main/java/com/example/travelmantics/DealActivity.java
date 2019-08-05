@@ -3,9 +3,11 @@ package com.example.travelmantics;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.net.Uri;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -16,6 +18,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.firebase.ui.auth.data.model.Resource;
+import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DatabaseReference;
@@ -112,12 +115,24 @@ public class DealActivity extends AppCompatActivity {
     }
 
     private void deleteDeal(){
-        if (deal == null){
+        if (deal == null) {
             Toast.makeText(this, "please save the deal before deleting", Toast.LENGTH_LONG).show();
             return;
         }
-        else{
-            mDatabaseReference.child(deal.getId()).removeValue();
+        mDatabaseReference.child(deal.getId()).removeValue();
+        if (deal.getImageName() != null && deal.getImageName().isEmpty() == false){
+            StorageReference picRef = FirebaseUtil.mStorage.getReference().child(deal.getImageName());
+            picRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+                @Override
+                public void onSuccess(Void aVoid) {
+                    Log.d("Delete image", "Image successfully Deleted");
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    Log.d("Delete image", e.getMessage());
+                }
+            });
         }
     }
 
@@ -141,15 +156,15 @@ public class DealActivity extends AppCompatActivity {
         if (FirebaseUtil.isAdmin){
             menu.findItem(R.id.delete_menu).setVisible(true);
             menu.findItem(R.id.save_menu).setVisible(true);
-            menu.findItem(R.id.insert_menu);
             enableEditTexts(true);
+            findViewById(R.id.btnImage).setEnabled(true);
         }
         else{
             menu.findItem(R.id.delete_menu).setVisible(false);
             menu.findItem(R.id.save_menu).setVisible(false);
             enableEditTexts(false);
+            findViewById(R.id.btnImage).setEnabled(false);
         }
-
         return true;
     }
 
@@ -174,7 +189,9 @@ public class DealActivity extends AppCompatActivity {
                     Uri downloadUrl = urlTask.getResult();
                     String url = downloadUrl.toString();
 
+                    String pictureName = taskSnapshot.getStorage().getPath();
                     deal.setImageUrl(url);
+                    deal.setImageName(pictureName);
                     showImage(url);
 
                 }
